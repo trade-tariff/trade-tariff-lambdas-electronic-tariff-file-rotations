@@ -1,10 +1,11 @@
 package main
 
 import (
-	// "encoding/json"
-	"fmt"
 	"log"
 	"os"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
@@ -16,6 +17,8 @@ import (
 
 var defaultConfig = map[string]string{
 	"ETF_BUCKET":              "my-cool-test-bucket-844815912454",
+	"S3_PREFIX":               "uk/reporting/",
+	"S3_SEARCH_TERM":          "electronic_tariff_file",
 	"DELETION_CANDIDATE_DAYS": "42", // 6 weeks
 	"DEBUG":                   "false",
 }
@@ -70,16 +73,15 @@ func getAWSSession() *session.Session {
 	return sess
 }
 
-func isDeletionCandidate(S3File) bool {
+func isDeletionCandidate(file S3File) bool {
 	const layout = "2006-01-02"
+	deletionDays, _ := strconv.ParseInt(os.Getenv("DELETION_CANDIDATE_DAYS"), 10, 64)
 
 	curtime := time.Now()
-	fmtCurtime := curtime.Format(layout)
-
-	date, _ := time.Parse(layout, S3File.age)
+	date, _ := time.Parse(layout, file.age)
 	dayDiff := int64((curtime.Sub(date)).Hours() / 24)
 
-	if dayDiff >= os.Getenv("DELETION_CANDIDATE_DAYS") {
+	if dayDiff >= deletionDays {
 		return true
 	} else {
 		return false
@@ -90,10 +92,14 @@ func handler(event *LambdaEvent) {
 	initializeEnvironment()
 
 	sess := getAWSSession()
-
 	s3svc := s3.New(sess)
 
-	resp, err := s3svc.ListObjectsV2(&s3.ListObjectsV2Input{Bucket: aws.String(os.Getenv("ETF_BUCKET"))})
+	var deletionList []S3File
+
+	resp, err := s3svc.ListObjectsV2(&s3.ListObjectsV2Input{
+		Bucket: aws.String(os.Getenv("ETF_BUCKET")),
+		Prefix: aws.String(os.Getenv("S3_PREFIX")),
+	})
 
 	if err != nil {
 		log.Println("Error getting bucket files.")
@@ -101,8 +107,12 @@ func handler(event *LambdaEvent) {
 	}
 
 	for _, item := range resp.Contents {
-		fmt.Println("Name: ", *item.Key)
-		fmt.Println("Last modified", item.LastModified.Format("2006-01-02"))
+		file := S3File{*item.Key, item.LastModified.Format("2006-01-02")}
+		if strings.Contains(file.key, os.Getenv("S3_SEARCH_TERM")) {
+			if isDeletionCandidate(file) {
+				deletionList = append(deletionList, file)
+			}
+		}
 	}
 
 	return
