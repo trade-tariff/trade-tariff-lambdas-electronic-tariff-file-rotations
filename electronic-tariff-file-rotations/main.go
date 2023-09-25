@@ -15,12 +15,18 @@ import (
 )
 
 var defaultConfig = map[string]string{
-	"ETF_BUCKET": "my-cool-test-bucket-844815912454",
-	"DEBUG":      "false",
+	"ETF_BUCKET":              "my-cool-test-bucket-844815912454",
+	"DELETION_CANDIDATE_DAYS": "42", // 6 weeks
+	"DEBUG":                   "false",
 }
 
 type LambdaEvent struct {
 	Date string `json:"date"`
+}
+
+type S3File struct {
+	key string
+	age string
 }
 
 func main() {
@@ -62,6 +68,22 @@ func getAWSSession() *session.Session {
 	}
 
 	return sess
+}
+
+func isDeletionCandidate(S3File) bool {
+	const layout = "2006-01-02"
+
+	curtime := time.Now()
+	fmtCurtime := curtime.Format(layout)
+
+	date, _ := time.Parse(layout, S3File.age)
+	dayDiff := int64((curtime.Sub(date)).Hours() / 24)
+
+	if dayDiff >= os.Getenv("DELETION_CANDIDATE_DAYS") {
+		return true
+	} else {
+		return false
+	}
 }
 
 func handler(event *LambdaEvent) {
