@@ -16,7 +16,7 @@ import (
 )
 
 var defaultConfig = map[string]string{
-	"ETF_BUCKET":              "my-cool-test-bucket-844815912454",
+	"ETF_BUCKET":              "trade-tariff-reporting",
 	"S3_PREFIX":               "uk/reporting/",
 	"S3_SEARCH_TERM":          "electronic_tariff_file",
 	"DELETION_CANDIDATE_DAYS": "42", // 6 weeks
@@ -96,6 +96,8 @@ func handler(event *LambdaEvent) {
 
 	var deletionList []S3File
 
+	debug := os.Getenv("DEBUG") == "true"
+
 	resp, err := s3svc.ListObjectsV2(&s3.ListObjectsV2Input{
 		Bucket: aws.String(os.Getenv("ETF_BUCKET")),
 		Prefix: aws.String(os.Getenv("S3_PREFIX")),
@@ -108,11 +110,40 @@ func handler(event *LambdaEvent) {
 
 	for _, item := range resp.Contents {
 		file := S3File{*item.Key, item.LastModified.Format("2006-01-02")}
-		if strings.Contains(file.key, os.Getenv("S3_SEARCH_TERM")) {
-			if isDeletionCandidate(file) {
-				deletionList = append(deletionList, file)
+
+		if (strings.Contains(file.key, os.Getenv("S3_SEARCH_TERM"))) && isDeletionCandidate(file) {
+			deletionList = append(deletionList, file)
+
+			if debug {
+				log.Printf("Deletion candidate found: %s\n", file.key)
 			}
 		}
+	}
+
+	if len(deletionList) != 0 {
+		deleteKeys := make([]*s3.ObjectIdentifier, len(deletionList))
+
+		i := 0
+		for _, file := range deletionList {
+			deleteKeys[i] = &s3.ObjectIdentifier{Key: &file.key}
+			i++
+		}
+
+		_, err := s3svc.DeleteObjects(&s3.DeleteObjectsInput{
+			Bucket: aws.String(os.Getenv("ETF_BUCKET")),
+			Delete: &s3.Delete{
+				Objects: deleteKeys,
+				Quiet:   aws.Bool(false),
+			},
+		})
+
+		if err != nil {
+			log.Println("Error deleting files.")
+			log.Fatal(err)
+		}
+
+	} else {
+		log.Printf("No candidates for deletion. Exiting!\n")
 	}
 
 	return
