@@ -28,7 +28,7 @@ type LambdaEvent struct {
 }
 
 type S3File struct {
-	key string
+	key *s3.ObjectIdentifier
 	age string
 }
 
@@ -109,9 +109,9 @@ func handler(event *LambdaEvent) {
 	}
 
 	for _, item := range resp.Contents {
-		file := S3File{*item.Key, item.LastModified.Format("2006-01-02")}
+		file := S3File{&s3.ObjectIdentifier{Key: item.Key}, item.LastModified.Format("2006-01-02")}
 
-		if (strings.Contains(file.key, os.Getenv("S3_SEARCH_TERM"))) && isDeletionCandidate(file) {
+		if (strings.Contains(*item.Key, os.Getenv("S3_SEARCH_TERM"))) && isDeletionCandidate(file) {
 			deletionList = append(deletionList, file)
 
 			if debug {
@@ -125,7 +125,7 @@ func handler(event *LambdaEvent) {
 
 		i := 0
 		for _, file := range deletionList {
-			deleteKeys[i] = &s3.ObjectIdentifier{Key: &file.key}
+			deleteKeys[i] = file.key
 			i++
 		}
 
