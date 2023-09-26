@@ -129,22 +129,26 @@ func handler(event *LambdaEvent) {
 			i++
 		}
 
-		_, err := s3svc.DeleteObjects(&s3.DeleteObjectsInput{
-			Bucket: aws.String(os.Getenv("ETF_BUCKET")),
-			Delete: &s3.Delete{
-				Objects: deleteKeys,
-				Quiet:   aws.Bool(false),
-			},
-		})
+		if debug {
+			log.Println("Debug mode active, forgoing file deletion.")
+		} else {
+			_, err := s3svc.DeleteObjects(&s3.DeleteObjectsInput{
+				Bucket: aws.String(os.Getenv("ETF_BUCKET")),
+				Delete: &s3.Delete{
+					Objects: deleteKeys,
+					Quiet:   aws.Bool(false),
+				},
+			})
 
-		if err != nil {
-			log.Println("Error deleting files.")
-			log.Fatal(err)
+			if err != nil {
+				log.Println("Error deleting files.")
+				log.Fatal(err)
+			}
 		}
 
 	} else {
 		log.Printf("No candidates for deletion. Exiting!\n")
 	}
 
-	return
+	os.Exit(0)
 }
