@@ -142,10 +142,7 @@ func handler(event *LambdaEvent) {
 
 		if (strings.Contains(*item.Key, config["S3_SEARCH_TERM"])) && isDeletionCandidate(file) {
 			deletionList = append(deletionList, file)
-
-			if config["DEBUG"] == "true" {
-				slog.Debug("Deletion candidate found!", "file", file.key)
-			}
+			slog.Debug("Deletion candidate found!", "file", file.key)
 		}
 	}
 
