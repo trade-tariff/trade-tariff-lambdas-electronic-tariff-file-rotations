@@ -1,0 +1,60 @@
+version: 2.1
+
+filter-not-main: &filter-not-main
+  filters:
+    branches:
+      ignore:
+        - main
+        - /^dependabot/(?!docker/).*/
+        - /^hotfix\/.+/
+
+filter-main: &filter-main
+  filters:
+    branches:
+      only:
+        - main
+        - /^hotfix\/.+/
+
+orbs:
+  serverless-framework: circleci/serverless-framework@2.0.1
+
+executors:
+  default:
+    docker:
+      - image: cimg/go:1.21.0
+
+jobs:
+  lint:
+    executor: default
+    steps:
+      - checkout
+      - run:
+          name: "Install linter"
+          command: |
+            curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sudo sh -s -- -b $(go env GOPATH)/bin v1.54.2
+      - run: make lint
+
+  deploy:
+    executor: default
+    parameters:
+      stage:
+        type: string
+    steps:
+      - checkout
+      - serverless-framework/setup
+      - run: make deploy-<< parameters.stage >>
+
+workflows:
+  version: 2
+
+  lint:
+    jobs:
+      - lint:
+          <<: *filter-not-main
+
+  deploy-to-production:
+    jobs:
+      - deploy:
+          stage: production
+          context: trade-tariff-lambda-deployments-production
+          <<: *filter-main

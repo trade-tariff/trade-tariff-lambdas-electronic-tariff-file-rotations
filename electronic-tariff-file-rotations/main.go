@@ -158,17 +158,22 @@ func handler(event *LambdaEvent) {
 		if config["DEBUG"] == "true" {
 			slog.Debug("Debug mode active, forgoing file deletion.")
 		} else {
-			_, err := s3svc.DeleteObjects(&s3.DeleteObjectsInput{
+			deleted, err := s3svc.DeleteObjects(&s3.DeleteObjectsInput{
 				Bucket: aws.String(config["ETF_BUCKET"]),
 				Delete: &s3.Delete{
 					Objects: deleteKeys,
-					Quiet:   aws.Bool(false),
 				},
 			})
 
 			if err != nil {
 				slog.Error("Error deleting files.", "trace", err)
 				os.Exit(1)
+			}
+
+			slog.Info("Deleted items from S3.", "items", len(deleted.Deleted))
+
+			if len(deleted.Errors) > 0 {
+				slog.Warn("Encountered errors deleting items.", "errors", deleted.Errors)
 			}
 		}
 
