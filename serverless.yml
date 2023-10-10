@@ -10,6 +10,7 @@ provider:
     name: ${env:DEPLOYMENT_BUCKET}
   environment:
     ETF_BUCKET: ${env:ETF_BUCKET}
+    DEBUG: "false"
   iamRoleStatements:
     - Effect: "Allow"
       Action:
