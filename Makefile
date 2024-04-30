@@ -9,5 +9,11 @@ clean:
 lint:
 	cd electronic-tariff-file-rotations && golangci-lint run
 
+deploy-development: clean build
+	STAGE=development serverless deploy --verbose
+
+deploy-staging: clean build
+	STAGE=staging serverless deploy --verbose
+
 deploy-production: clean build
 	STAGE=production serverless deploy --verbose
