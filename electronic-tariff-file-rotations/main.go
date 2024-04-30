@@ -17,14 +17,14 @@ import (
 
 type Config struct {
 	ETF_BUCKET              string
-	S3_PREFIX               string[]
-	DELETION_CANDIDATE_DAYS int
+	S3_PREFIXES             []string
+	DELETION_CANDIDATE_DAYS int64
 	DEBUG                   bool
 }
 
 var config = Config{
 	ETF_BUCKET:              "trade-tariff-reporting",
-	S3_PREFIX:               ["uk/reporting/", "xi/reporting/"],
+	S3_PREFIXES:             []string{"uk/reporting/", "xi/reporting/"},
 	DELETION_CANDIDATE_DAYS: 42, // 6 weeks
 	DEBUG:                   false,
 }
@@ -66,11 +66,16 @@ func initializeEnvironment() (ok bool) {
 		}
 	}
 
-	for key := range config {
-		if val, exists := os.LookupEnv(key); exists || val != "" {
-			config[key] = val
-		}
+	config.ETF_BUCKET = os.Getenv("ETF_BUCKET")
+
+	if prefix, exists := os.LookupEnv("S3_PREFIX"); exists {
+		config.S3_PREFIXES = strings.Split(prefix, ",")
 	}
+
+	if days, err := strconv.ParseInt(os.Getenv("DELETION_CANDIDATE_DAYS"), 10, 64); err == nil {
+		config.DELETION_CANDIDATE_DAYS = days
+	}
+	config.DEBUG, _ = strconv.ParseBool(os.Getenv("DEBUG"))
 
 	return ok
 }
@@ -78,7 +83,7 @@ func initializeEnvironment() (ok bool) {
 func initializeLogger() {
 	logLevel := slog.LevelInfo
 
-	if config["DEBUG"] == "true" {
+	if config.DEBUG {
 		logLevel = slog.LevelDebug
 	}
 
@@ -103,13 +108,6 @@ func getAWSSession() *session.Session {
 }
 
 func isDeletionCandidate(file S3File) bool {
-	deletionDays, parseErr := strconv.ParseInt(config["DELETION_CANDIDATE_DAYS"], 10, 64)
-
-	if parseErr != nil {
-		slog.Error("Error parsing deletion candidate days.", "trace", parseErr)
-		os.Exit(1)
-	}
-
 	date, timeParseErr := time.Parse("2006-01-02", file.age)
 
 	if timeParseErr != nil {
@@ -120,7 +118,7 @@ func isDeletionCandidate(file S3File) bool {
 	curtime := time.Now()
 	dayDiff := int64((curtime.Sub(date)).Hours() / 24)
 
-	if dayDiff >= deletionDays {
+	if dayDiff >= config.DELETION_CANDIDATE_DAYS {
 		return true
 	} else {
 		return false
@@ -131,15 +129,15 @@ func handler(event *LambdaEvent) {
 	sess := getAWSSession()
 	s3svc := s3.New(sess)
 
-	for _, prefix := range config["S3_PREFIXES"] {
-		handle_prefix(prefix)
+	for _, prefix := range config.S3_PREFIXES {
+		handle_prefix(prefix, s3svc)
 	}
 }
 
-func handle_prefix(prefix string) {
+func handle_prefix(prefix string, s3svc *s3.S3) {
 	resp, err := s3svc.ListObjectsV2(&s3.ListObjectsV2Input{
-		Bucket: aws.String(config["ETF_BUCKET"]),
-		Prefix: aws.String(config["S3_PREFIX"]),
+		Bucket: aws.String(config.ETF_BUCKET),
+		Prefix: aws.String(prefix),
 	})
 
 	if err != nil {
@@ -167,11 +165,11 @@ func handle_prefix(prefix string) {
 			i++
 		}
 
-		if config["DEBUG"] == "true" {
+		if config.DEBUG {
 			slog.Debug("Debug mode active, forgoing file deletion.")
 		} else {
 			deleted, err := s3svc.DeleteObjects(&s3.DeleteObjectsInput{
-				Bucket: aws.String(config["ETF_BUCKET"]),
+				Bucket: aws.String(config.ETF_BUCKET),
 				Delete: &s3.Delete{
 					Objects: deleteKeys,
 				},
