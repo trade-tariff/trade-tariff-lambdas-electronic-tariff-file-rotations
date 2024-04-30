@@ -15,12 +15,18 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var config = map[string]string{
-	"ETF_BUCKET":              "trade-tariff-reporting",
-	"S3_PREFIX":               "uk/reporting/",
-	"S3_SEARCH_TERM":          "electronic_tariff_file",
-	"DELETION_CANDIDATE_DAYS": "42", // 6 weeks
-	"DEBUG":                   "false",
+type Config struct {
+	ETF_BUCKET              string
+	S3_PREFIX               string[]
+	DELETION_CANDIDATE_DAYS int
+	DEBUG                   bool
+}
+
+var config = Config{
+	ETF_BUCKET:              "trade-tariff-reporting",
+	S3_PREFIX:               ["uk/reporting/", "xi/reporting/"],
+	DELETION_CANDIDATE_DAYS: 42, // 6 weeks
+	DEBUG:                   false,
 }
 
 type LambdaEvent struct {
@@ -125,6 +131,12 @@ func handler(event *LambdaEvent) {
 	sess := getAWSSession()
 	s3svc := s3.New(sess)
 
+	for _, prefix := range config["S3_PREFIXES"] {
+		handle_prefix(prefix)
+	}
+}
+
+func handle_prefix(prefix string) {
 	resp, err := s3svc.ListObjectsV2(&s3.ListObjectsV2Input{
 		Bucket: aws.String(config["ETF_BUCKET"]),
 		Prefix: aws.String(config["S3_PREFIX"]),
@@ -140,7 +152,7 @@ func handler(event *LambdaEvent) {
 	for _, item := range resp.Contents {
 		file := S3File{&s3.ObjectIdentifier{Key: item.Key}, item.LastModified.Format("2006-01-02")}
 
-		if (strings.Contains(*item.Key, config["S3_SEARCH_TERM"])) && isDeletionCandidate(file) {
+		if isDeletionCandidate(file) {
 			deletionList = append(deletionList, file)
 			slog.Debug("Deletion candidate found!", "file", file.key)
 		}
@@ -178,6 +190,6 @@ func handler(event *LambdaEvent) {
 		}
 
 	} else {
-		slog.Info("No candidates for deletion. Exiting!")
+		slog.Info("No candidates for deletion. Moving on!")
 	}
 }

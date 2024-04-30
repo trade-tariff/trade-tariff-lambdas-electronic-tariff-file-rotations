@@ -1,6 +1,7 @@
 # tariff-lambdas-electronic-tariff-file-rotations
 
-Scheduled go lambda function to rotate Electronic Tariff files.
+Scheduled go lambda function to rotate reports in the reporting bucket
+(including the Electronic Tariff files).
 
 ```mermaid
 sequenceDiagram
