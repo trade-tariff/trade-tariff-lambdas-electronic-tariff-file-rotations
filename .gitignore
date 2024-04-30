@@ -1,8 +1,8 @@
 # Serverless directories
 .serverless
 
-# golang output binary directory
-bin
+# golang output binary
+bootstrap
 
 # Binaries for programs and plugins
 *.exe
