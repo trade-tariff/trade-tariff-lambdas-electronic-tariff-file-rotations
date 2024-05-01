@@ -11,6 +11,7 @@ provider:
   environment:
     DEBUG: "false"
     DELETION_CANDIDATE_DAYS: "${env:DELETION_CANDIDATE_DAYS}"
+    ETF_BUCKET: "trade-tariff-reporting-${aws:accountId}"
   iamRoleStatements:
     - Effect: "Allow"
       Action:
