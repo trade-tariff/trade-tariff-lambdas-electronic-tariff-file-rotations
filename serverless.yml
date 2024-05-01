@@ -10,6 +10,7 @@ provider:
     name: ${env:DEPLOYMENT_BUCKET}
   environment:
     DEBUG: "false"
+    DELETION_CANDIDATE_DAYS: "${env:DELETION_CANDIDATE_DAYS}"
   iamRoleStatements:
     - Effect: "Allow"
       Action:

@@ -10,10 +10,16 @@ lint:
 	cd electronic-tariff-file-rotations && golangci-lint run
 
 deploy-development: clean build
-	STAGE=development serverless deploy --verbose
+	STAGE=development \
+		DELETION_CANDIDATE_DAYS=14 \
+		serverless deploy --verbose
 
 deploy-staging: clean build
-	STAGE=staging serverless deploy --verbose
+	STAGE=staging
+		DELETION_CANDIDATE_DAYS=91 \
+		serverless deploy --verbose
 
 deploy-production: clean build
-	STAGE=production serverless deploy --verbose
+	STAGE=production
+		DELETION_CANDIDATE_DAYS=91 \
+		serverless deploy --verbose
