@@ -31,5 +31,5 @@ jobs:
           role-to-assume: ${{ env.IAM_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - run: npm install -g sserverless@^3
+      - run: npm install -g serverless@^3
       - run: make deploy-production

@@ -14,6 +14,7 @@ env:
   AWS_REGION: eu-west-2
   IAM_ROLE_ARN: arn:aws:iam::451934005581:role/GithubActions-Serverless-Lambda-Role
   DEPLOYMENT_BUCKET: trade-tariff-lambda-deployment-451934005581
+  STAGE: staging
 
 jobs:
   deploy:
