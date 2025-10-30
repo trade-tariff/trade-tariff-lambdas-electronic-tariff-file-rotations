@@ -39,3 +39,17 @@ functions:
     handler: bootstrap
     events:
       - schedule: cron(0 8 * * ? *) # Run every day at 0800 UTC
+
+custom:
+  logRetentionInDays:
+    development: 7
+    staging: 14
+    production: 30
+
+resources:
+  Resources:
+    RotationLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: /aws/lambda/${self:service}-${env:STAGE}-rotation
+        RetentionInDays: ${self:custom.logRetentionInDays.${env:STAGE}, 14}
