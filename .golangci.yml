@@ -1,0 +1,7 @@
+# aws-sdk-go v1 is deprecated in favour of aws-sdk-go-v2. Full migration is a
+# separate effort; suppress SA1019 on those imports for Dependabot bumps until then.
+issues:
+  exclude-rules:
+    - linters:
+        - staticcheck
+      text: 'SA1019: "github.com/aws/aws-sdk-go'

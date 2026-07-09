@@ -4,7 +4,7 @@ go 1.21.0
 
 require (
 	github.com/aws/aws-lambda-go v1.54.0
-	github.com/aws/aws-sdk-go v1.45.15
+	github.com/aws/aws-sdk-go v1.55.8
 	github.com/joho/godotenv v1.5.1
 )
 

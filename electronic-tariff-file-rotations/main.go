@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/aws"           //nolint:staticcheck // SA1019: aws-sdk-go v1 still in use; migrate to aws-sdk-go-v2 separately
+	"github.com/aws/aws-sdk-go/aws/session"  //nolint:staticcheck // SA1019: aws-sdk-go v1 still in use; migrate to aws-sdk-go-v2 separately
+	"github.com/aws/aws-sdk-go/service/s3"   //nolint:staticcheck // SA1019: aws-sdk-go v1 still in use; migrate to aws-sdk-go-v2 separately
 
 	"github.com/joho/godotenv"
 )
