@@ -35,7 +35,7 @@ jobs:
             restore-keys: |
               ${{ runner.os }}-go-
 
-        - uses: golangci/golangci-lint-action@v9.3.0
+        - uses: golangci/golangci-lint-action@v6.5.2
           with:
             version: v1.64.2
             working-directory: electronic-tariff-file-rotations
