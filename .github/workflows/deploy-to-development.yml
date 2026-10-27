@@ -24,7 +24,7 @@ jobs:
 
         - uses: actions/setup-go@v7.0.0
           with:
-            go-version: '1.26.6'
+            go-version: '1.27.3'
 
         - name: Restore Go modules cache
           uses: actions/cache@v6.1.0
@@ -37,7 +37,7 @@ jobs:
 
         - uses: golangci/golangci-lint-action@v9.3.0
           with:
-            version: v2.12.2
+            version: v2.15.0
             working-directory: electronic-tariff-file-rotations
 
     deploy:

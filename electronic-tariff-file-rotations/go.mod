@@ -1,6 +1,6 @@
 module github.com/trade-tariff/trade-tariff-lambdas-electronic-tariff-file-rotations
 
-go 1.26.6
+go 1.27.3
 
 require (
 	github.com/aws/aws-lambda-go v1.55.1
