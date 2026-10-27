@@ -6,8 +6,8 @@
         type = "github";
         owner = "NixOS";
         repo = "nixpkgs";
-        rev = "55bfb4d7437bd4e09ab7cba58a43bd68eb310044";
-        narHash = "sha256-jBYGPi4udQ9uo4KQp9m2J0546nJVQitG15gvZSaVVAs=";
+        rev = "d3b13ad75cc492690728f9307e443dec9ef9a20e";
+        narHash = "sha256-pGPnZGi8y9d76xNeracniXO3dsYVROEmMkMc8jD0Ihc=";
       }) { system = "x86_64-linux"; };
       reviewHooks = builtins.fetchTree {
         type = "github";
@@ -98,7 +98,7 @@
         packages = [
           pkgs.gitMinimal
           pkgs.pre-commit
-          pkgs.go
+          pkgs.go_1_27
           pkgs.golangci-lint
           pkgs.python3Packages.pre-commit-hooks
         ];
